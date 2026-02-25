@@ -1,121 +1,216 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Leaf, Award, TrendingUp, Sparkles, MapPin } from 'lucide-react';
-
-const container = {
-    hidden: { opacity: 0 },
-    show: {
-        opacity: 1,
-        transition: {
-            staggerChildren: 0.1
-        }
-    }
-};
-
-const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 }
-};
-
-const StatCard = ({ icon: Icon, value, label, color, delay }) => (
-    <motion.div
-        variants={item}
-        whileHover={{ y: -5 }}
-        className={`flex flex-col items-center justify-center p-4 rounded-3xl glass-card relative overflow-hidden group border border-white/40`}
-    >
-        <div className={`absolute top-0 right-0 p-10 opacity-10 rounded-full blur-xl group-hover:scale-150 transition-transform duration-700 ${color.replace('text-', 'bg-')}`}></div>
-        <Icon size={24} className={`mb-2 opacity-80 ${color}`} />
-        <span className="text-3xl font-black text-eco-text">{value}</span>
-        <span className="text-xs opacity-60 uppercase tracking-widest font-semibold">{label}</span>
-    </motion.div>
-);
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Leaf, Award, Search, CheckCircle2, ShoppingBag } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 export default function Home() {
-    // Mock data
-    const points = 750;
-    const nextMilestone = 1000;
-    const progress = (points / nextMilestone) * 100;
+    const navigate = useNavigate();
+    const [items, setItems] = useState([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [toastMsg, setToastMsg] = useState('');
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchItems();
+    }, []);
+
+    const fetchItems = async () => {
+        setLoading(true);
+        const { data, error } = await supabase
+            .from('items')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (!error && data) {
+            setItems(data);
+        } else {
+            console.error('Error fetching items:', error);
+        }
+        setLoading(false);
+    };
+
+    const handleBuy = (id, title) => {
+        setItems(items.filter(item => item.id !== id));
+        setToastMsg(`Claimed: ${title}! Check your messages to coordinate.`);
+        setTimeout(() => setToastMsg(''), 3500);
+    };
+
+    const filteredItems = items.filter(item =>
+        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.type.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    const listings = filteredItems.filter(item => item.type !== 'buy');
+    const requests = filteredItems.filter(item => item.type === 'buy');
 
     return (
-        <motion.div
-            variants={container}
-            initial="hidden"
-            animate="show"
-            className="space-y-8 pb-24"
-        >
-            <header className="mt-4 flex justify-between items-end">
-                <div>
-                    <h1 className="text-3xl font-black gradient-text">Your Impact</h1>
-                    <p className="text-eco-text/70 font-medium">Keep making a difference!</p>
-                </div>
-                <div className="p-2 glass rounded-full">
-                    <Sparkles className="text-yellow-500 animate-pulse" />
-                </div>
-            </header>
+        <div className="flex flex-col min-h-full bg-background relative font-sans">
 
-            {/* Progress Section */}
-            <motion.section
-                variants={item}
-                className="bg-gradient-to-br from-eco-green to-eco-dark text-white p-8 rounded-[2rem] shadow-2xl relative overflow-hidden"
-            >
-                <div className="relative z-10">
-                    <div className="flex justify-between items-end mb-3">
-                        <span className="text-sm font-bold opacity-80 tracking-wide uppercase">Next Reward</span>
+            {/* Toast Notification */}
+            <AnimatePresence>
+                {toastMsg && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -50 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -50 }}
+                        className="fixed top-safe left-4 right-4 mt-4 z-[100] bg-primary text-white p-4 rounded-xl shadow-lg flex items-center space-x-3"
+                    >
+                        <CheckCircle2 size={24} />
+                        <p className="font-medium text-[15px]">{toastMsg}</p>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Header & Stats Section */}
+            <div className="pt-14 pb-6 px-6 bg-accent rounded-b-xl shadow-sm relative z-10 border-b border-border/50">
+                <div className="flex justify-between items-center mb-6">
+                    <h1 className="text-3xl font-serif text-foreground tracking-tight">Marketplace</h1>
+                    <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-2 bg-white/70 backdrop-blur-md px-4 py-2 rounded-full border border-border text-primary font-semibold shadow-sm cursor-pointer hover:bg-white/90 transition-colors" onClick={() => navigate('/profile')}>
+                            <Leaf className="w-5 h-5" />
+                            <span>12 Points</span>
+                        </div>
+                        <button
+                            onClick={() => navigate('/profile')}
+                            className="w-10 h-10 rounded-full bg-accent border border-border overflow-hidden active:scale-95 transition-transform hover:shadow-sm"
+                        >
+                            <img src="https://i.pravatar.cc/150?u=emma" alt="Profile" className="w-full h-full object-cover" />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Progress Bar Mock */}
+                <div className="bg-white rounded-md p-5 shadow-sm border border-border mb-6">
+                    <div className="flex justify-between items-center mb-3">
+                        <div>
+                            <p className="text-sm text-muted-foreground font-medium uppercase tracking-widest">Next Reward</p>
+                            <p className="font-serif text-lg leading-tight mt-1 flex items-center">
+                                Macy's <span className="inline-flex items-center justify-center w-5 h-5 ml-2 bg-accent text-primary rounded-full"><Award className="w-3 h-3" /></span>
+                            </p>
+                        </div>
                         <div className="text-right">
-                            <span className="text-4xl font-black">{points}</span>
-                            <span className="text-lg opacity-60">/{nextMilestone}</span>
+                            <p className="font-semibold text-xl text-primary">12 / 20</p>
+                            <p className="text-[11px] text-muted-foreground uppercase tracking-widest font-medium">Donations</p>
                         </div>
                     </div>
-                    <div className="h-4 bg-black/20 rounded-full overflow-hidden backdrop-blur-sm border border-white/10">
+
+                    <div className="h-3 w-full bg-accent rounded-full overflow-hidden border border-border/50">
                         <motion.div
                             initial={{ width: 0 }}
-                            animate={{ width: `${progress}%` }}
-                            transition={{ duration: 1.5, ease: "easeOut" }}
-                            className="h-full bg-gradient-to-r from-eco-light to-white rounded-full shadow-[0_0_20px_rgba(255,255,255,0.5)]"
-                        />
+                            animate={{ width: '60%' }}
+                            transition={{ duration: 1, ease: 'easeOut' }}
+                            className="h-full bg-primary rounded-full relative"
+                        >
+                            <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                        </motion.div>
                     </div>
-                    <p className="mt-4 text-sm font-medium opacity-90 flex items-center">
-                        <span className="mr-2">🎉</span>
-                        You're {nextMilestone - points} points away from a discount!
-                    </p>
                 </div>
-                {/* Decorative background circle */}
-                <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl animate-blob animation-delay-2000" />
-                <div className="absolute -top-24 -left-24 w-64 h-64 bg-eco-light/20 rounded-full blur-3xl animate-blob" />
-            </motion.section>
 
-            {/* Grid Stats */}
-            <section className="grid grid-cols-2 gap-4">
-                <StatCard icon={Leaf} value="12" label="Repurposed" color="text-eco-green" />
-                <StatCard icon={Award} value="5" label="Donated" color="text-blue-500" />
-                <StatCard icon={TrendingUp} value="24kg" label="CO2 Saved" color="text-teal-500" />
-                <StatCard icon={Award} value="$300" label="Earned" color="text-amber-600" />
-            </section>
-
-            {/* Recent Activity or Suggestions */}
-            <section className="space-y-4">
-                <h2 className="text-xl font-bold text-eco-dark px-2">Recommended for You</h2>
-                <div className="space-y-3">
-                    <motion.div variants={item} className="p-4 rounded-2xl glass-card flex items-center space-x-4 cursor-pointer group">
-                        <div className="w-14 h-14 rounded-xl bg-indigo-100 flex-shrink-0 flex items-center justify-center text-indigo-500 group-hover:scale-110 transition-transform">
-                            <MapPin />
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-gray-800">Summer Vintage Sale</h3>
-                            <p className="text-sm text-gray-500 font-medium">0.5 mi • Downtown</p>
-                        </div>
-                    </motion.div>
-                    <motion.div variants={item} className="p-4 rounded-2xl glass-card flex items-center space-x-4 cursor-pointer group">
-                        <div className="w-14 h-14 rounded-xl bg-orange-100 flex-shrink-0 flex items-center justify-center text-orange-500 group-hover:scale-110 transition-transform">
-                            <Sparkles />
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-gray-800">Cotton Upcycling Workshop</h3>
-                            <p className="text-sm text-gray-500 font-medium">Sat, 2pm • Community Center</p>
-                        </div>
-                    </motion.div>
+                <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <Search className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <input
+                        type="text"
+                        placeholder="Search items..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full bg-white border border-border rounded-md pl-11 pr-4 py-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all text-foreground text-[14px]"
+                    />
                 </div>
-            </section>
-        </motion.div>
+            </div>
+
+            {/* Marketplace Feed Section */}
+            <div className="flex-1 px-4 pt-5 pb-32">
+                {loading ? (
+                    <div className="flex justify-center py-20">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    </div>
+                ) : (
+                    <>
+                        {/* Main Listings: sell, donate, repurpose */}
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">
+                            <AnimatePresence>
+                                {listings.map((item, i) => (
+                                    <motion.div
+                                        layout
+                                        key={item.id}
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.9 }}
+                                        transition={{ delay: i * 0.03 }}
+                                        onClick={() => navigate(`/item/${item.id}`)}
+                                        className="group bg-white rounded-md overflow-hidden border border-border flex flex-col active:scale-[0.98] transition-all cursor-pointer hover:border-primary/25 hover:shadow-sm"
+                                    >
+                                        {/* Image */}
+                                        <div className="aspect-[3/4] w-full bg-accent relative overflow-hidden">
+                                            {item.image_url ? (
+                                                <img src={item.image_url} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-primary/20">
+                                                    <ShoppingBag size={20} />
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Details */}
+                                        <div className="p-2.5 flex flex-col justify-between flex-1 bg-white">
+                                            <h3 className="font-serif text-[13px] text-foreground leading-tight line-clamp-1">{item.title}</h3>
+                                            <div className="mt-1.5 flex items-center justify-between">
+                                                <span className={`font-serif text-[14px] ${item.price.toLowerCase() === 'donation' ? 'text-primary' : 'text-foreground'}`}>
+                                                    {item.price}
+                                                </span>
+                                                <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-medium">
+                                                    {item.type}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </AnimatePresence>
+                        </div>
+
+                        {listings.length === 0 && !searchQuery && (
+                            <div className="text-center py-16 text-muted-foreground">
+                                <ShoppingBag className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                                <p className="font-serif text-lg">No items yet</p>
+                                <p className="text-sm mt-1 text-muted-foreground">Be the first to list something</p>
+                            </div>
+                        )}
+
+                        {/* Item Requests Section (type=buy) */}
+                        {requests.length > 0 && (
+                            <div className="mt-10">
+                                <div className="flex items-center space-x-3 mb-4">
+                                    <div className="flex-1 h-px bg-border" />
+                                    <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-semibold">Community Requests</span>
+                                    <div className="flex-1 h-px bg-border" />
+                                </div>
+                                <div className="space-y-2">
+                                    {requests.map((item, i) => (
+                                        <motion.div
+                                            key={item.id}
+                                            initial={{ opacity: 0, y: 6 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: i * 0.05 }}
+                                            onClick={() => navigate(`/item/${item.id}`)}
+                                            className="bg-white border border-dashed border-border rounded-md p-3.5 flex items-center justify-between cursor-pointer hover:border-primary/30 hover:shadow-sm transition-all active:scale-[0.99]"
+                                        >
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="font-serif text-[14px] text-foreground leading-tight truncate">{item.title}</h4>
+                                                <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-0.5">{item.store_name}</p>
+                                            </div>
+                                            <div className="ml-4 text-right flex-shrink-0">
+                                                <span className="font-serif text-[14px] text-foreground">{item.price !== 'Donation' ? `up to ${item.price}` : 'Any price'}</span>
+                                            </div>
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </>
+                )}
+            </div>
+        </div>
     );
 }

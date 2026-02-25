@@ -1,139 +1,116 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, ShoppingBag, CreditCard, Recycle, Heart, ChevronDown } from 'lucide-react';
-import AuthModal from '../components/AuthModal';
-
-const slides = [
-    {
-        id: 'location',
-        type: 'location',
-        title: "Find Your Eco-Community",
-        desc: "We need your location to show you nearby buyers, sellers, and donation centers.",
-        color: "bg-eco-dark"
-    },
-    {
-        id: 'sell',
-        title: "Sell Your Clothes",
-        desc: "Give your closet a second life and earn cash.",
-        icon: ShoppingBag,
-        color: "bg-eco-brown"
-    },
-    {
-        id: 'buy',
-        title: "Shop Sustainably",
-        desc: "Find unique, pre-loved pieces at great prices.",
-        icon: CreditCard,
-        color: "bg-eco-green"
-    },
-    {
-        id: 'repurpose',
-        title: "Repurpose",
-        desc: "Learn how to upcycle your old threads into something new.",
-        icon: Recycle,
-        color: "bg-orange-700"
-    },
-    {
-        id: 'donate',
-        title: "Donate & Earn Credits",
-        desc: "Help the community and earn rewards for your generosity.",
-        icon: Heart,
-        color: "bg-emerald-600"
-    }
-];
+import { motion, AnimatePresence } from 'framer-motion';
+import { MapPin, Recycle, HeartHandshake, ShoppingBag, Store } from 'lucide-react';
 
 export default function Onboarding() {
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [showAuth, setShowAuth] = useState(false);
     const navigate = useNavigate();
+    const [step, setStep] = useState(0);
 
-    const nextSlide = () => {
-        if (currentIndex < slides.length - 1) {
-            setCurrentIndex(prev => prev + 1);
+    const slides = [
+        {
+            title: "Location Access",
+            desc: "ReWear needs your location to map out nearby thrift stores, donation centers, and local community members.",
+            icon: <MapPin className="w-16 h-16 text-primary mb-6" />,
+            action: "Enable Location",
+            requiresAction: true
+        },
+        {
+            title: "Repurpose",
+            desc: "Find ways on how you can repurpose old or unwanted clothing.",
+            icon: <Recycle className="w-20 h-20 text-emerald-600 mb-8" />
+        },
+        {
+            title: "Donate",
+            desc: "Donate old or unwanted clothing to local thrift stores or chat with others who want them.",
+            icon: <HeartHandshake className="w-20 h-20 text-rose-500 mb-8" />
+        },
+        {
+            title: "Buy",
+            desc: "Buy unwanted clothes from other users to upgrade your wardrobe!",
+            icon: <ShoppingBag className="w-20 h-20 text-blue-500 mb-8" />
+        },
+        {
+            title: "Sell",
+            desc: "Sell old or unwanted clothes by chatting with those who are looking to buy.",
+            icon: <Store className="w-20 h-20 text-amber-500 mb-8" />
+        }
+    ];
+
+    const handleNext = () => {
+        if (step < slides.length - 1) {
+            setStep(s => s + 1);
+        } else {
+            navigate('/home');
         }
     };
 
-    const handleGetStarted = () => {
-        setShowAuth(true);
+    const currentSlide = slides[step];
+
+    // Slide vertically for TikTok effect
+    const variants = {
+        enter: { y: '100%', opacity: 1 },
+        center: { y: 0, opacity: 1 },
+        exit: { y: '-100%', opacity: 1 },
     };
 
     return (
-        <div className="fixed inset-0 overflow-hidden bg-black text-white">
-            <AnimatePresence mode="wait">
+        <div className="fixed inset-0 bg-background text-foreground overflow-hidden">
+            <AnimatePresence initial={false}>
                 <motion.div
-                    key={currentIndex}
-                    initial={{ y: "100%", opacity: 0.5 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: "-100%", opacity: 0.5 }}
-                    transition={{ duration: 0.6, ease: [0.32, 0.72, 0, 1] }}
-                    className={`absolute inset-0 flex flex-col items-center justify-center p-8 text-center ${slides[currentIndex].color}`}
+                    key={step}
+                    variants={variants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    className="absolute inset-0 flex flex-col justify-center items-center p-8 text-center glass-panel"
                 >
-                    {/* Content */}
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.2 }}
-                        className="flex-1 flex flex-col items-center justify-center space-y-8 max-w-sm relative z-10"
-                    >
-                        {slides[currentIndex].type === 'location' ? (
-                            <div className="flex flex-col items-center space-y-6">
-                                <div className="p-8 bg-white/20 rounded-full backdrop-blur-xl border border-white/30 shadow-2xl">
-                                    <MapPin size={64} className="text-white drop-shadow-md" />
-                                </div>
-                                <h2 className="text-4xl font-black tracking-tight">{slides[currentIndex].title}</h2>
-                                <p className="text-xl opacity-90 font-medium leading-relaxed">{slides[currentIndex].desc}</p>
-                                <motion.button
-                                    whileTap={{ scale: 0.95 }}
-                                    onClick={nextSlide}
-                                    className="px-10 py-4 bg-white text-black font-bold rounded-full shadow-xl hover:scale-105 transition-transform"
-                                >
-                                    Enable Location
-                                </motion.button>
-                                <button onClick={nextSlide} className="text-sm underline opacity-70 hover:opacity-100">
-                                    Skip for now
-                                </button>
-                            </div>
-                        ) : (
-                            <>
-                                {slides[currentIndex].icon && (
-                                    <div className="p-8 bg-white/10 rounded-[2rem] backdrop-blur-md shadow-2xl border border-white/20">
-                                        {React.createElement(slides[currentIndex].icon, { size: 80, className: "text-white" })}
-                                    </div>
-                                )}
-                                <h2 className="text-5xl font-black tracking-tighter leading-none">{slides[currentIndex].title}</h2>
-                                <p className="text-xl font-medium opacity-90 leading-relaxed">{slides[currentIndex].desc}</p>
-
-                                <motion.button
-                                    whileTap={{ scale: 0.95 }}
-                                    onClick={handleGetStarted}
-                                    className="mt-8 px-12 py-5 bg-white text-black font-black rounded-full text-xl shadow-2xl hover:scale-105 transition-transform"
-                                >
-                                    Get Started
-                                </motion.button>
-                            </>
-                        )}
-                    </motion.div>
-
-                    {/* Background blob for extra flair */}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-white/10 rounded-full blur-[100px] pointer-events-none" />
-
-                    {/* Navigation Hint */}
-                    {currentIndex < slides.length - 1 && (
+                    <div className="max-w-xs flex flex-col items-center">
                         <motion.div
-                            animate={{ y: [0, 10, 0] }}
-                            transition={{ repeat: Infinity, duration: 1.5 }}
-                            className="absolute bottom-10 opacity-70 cursor-pointer p-4"
-                            onClick={nextSlide}
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ delay: 0.2 }}
                         >
-                            <ChevronDown size={40} />
+                            {currentSlide.icon}
                         </motion.div>
+
+                        <h1 className="text-5xl font-serif font-semibold tracking-tight text-foreground mb-6">
+                            {currentSlide.title}
+                        </h1>
+
+                        <p className="text-lg text-muted-foreground font-sans leading-relaxed">
+                            {currentSlide.desc}
+                        </p>
+
+                        {currentSlide.requiresAction ? (
+                            <button
+                                onClick={() => {
+                                    // Simulate asking for location API, then move on
+                                    setTimeout(handleNext, 300);
+                                }}
+                                className="mt-12 w-full py-4 px-6 bg-primary text-white rounded-xl font-medium tracking-wide shadow-lg active:scale-95 transition-all text-lg"
+                            >
+                                {currentSlide.action}
+                            </button>
+                        ) : null}
+                    </div>
+
+                    {/* Progress Indicators */}
+                    <div className="absolute bottom-12 flex space-x-2">
+                        {slides.map((_, idx) => (
+                            <div
+                                key={idx}
+                                className={`h-2 rounded-full transition-all duration-300 ${idx === step ? 'w-8 bg-primary' : 'w-2 bg-border'}`}
+                            />
+                        ))}
+                    </div>
+
+                    {/* Invisible click handler to act as swipe/tap next if not on action screen */}
+                    {!currentSlide.requiresAction && (
+                        <div onClick={handleNext} className="absolute inset-0 z-10 cursor-pointer" />
                     )}
                 </motion.div>
-            </AnimatePresence>
-
-            {/* Auth Modal Overlay */}
-            <AnimatePresence>
-                {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
             </AnimatePresence>
         </div>
     );

@@ -1,100 +1,66 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
+
+@font-face {
+  font-family: 'TiemposText';
+  src: url('./KlimTestFonts/Test web fonts (Variable, WOFF2)/Test Tiempos Collection/Test Tiempos Text/TestTiemposText-Variable.woff2') format('woff2');
+  font-weight: 300 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'TiemposText';
+  src: url('./KlimTestFonts/Test web fonts (Variable, WOFF2)/Test Tiempos Collection/Test Tiempos Text/TestTiemposText-ItalicVariable.woff2') format('woff2');
+  font-weight: 300 700;
+  font-style: italic;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  :root {
+    /* Minimalist / Editorial Aesthetic */
+    --background: #FCFDFB;
+    --foreground: #1D231E;
+    --card: #FFFFFF;
+    --card-foreground: #1D231E;
+    --popover: #FFFFFF;
+    --popover-foreground: #1D231E;
+
+    /* Primary brand color - muted, sophisticated green */
+    --primary: #526B53;
+    --primary-foreground: #FFFFFF;
+
+    /* Secondary/Muted colors - higher contrast for minimalism */
+    --muted: #F2F5F0;
+    --muted-foreground: #6B7C6E;
+    --accent: #EEF2ED;
+    --accent-foreground: #2A382A;
+    --border: #E2E8DF;
+  }
+
   body {
-    @apply bg-eco-bg text-eco-text antialiased overflow-x-hidden transition-colors duration-500;
+    @apply bg-[var(--background)] text-[var(--foreground)] font-sans antialiased selection:bg-[#CCDBCB] selection:text-foreground;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-serif tracking-tight text-[#1E2B23];
   }
 }
 
-/* Custom scrollbar for webkit */
-::-webkit-scrollbar {
-  width: 4px;
-}
-
-::-webkit-scrollbar-track {
-  background-color: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  @apply bg-eco-green/30 rounded-full;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-eco-green/50;
-}
-
-/* Liquid Glass Utilities */
-.glass {
-  background-color: rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-}
-
-.glass-dark {
-  background-color: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-}
-
-.glass-card {
-  background-color: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease-in-out;
-}
-
-.glass-card:hover {
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-}
-
-.glass-panel {
-  background-color: rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(40px);
-  -webkit-backdrop-filter: blur(40px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-}
-
-/* Blob Animations */
-@keyframes blob {
-  0% {
-    transform: translate(0px, 0px) scale(1);
+@layer utilities {
+  .glass-panel {
+    @apply bg-white/80 backdrop-blur-xl border border-white/40 shadow-sm rounded-none sm:rounded-md;
   }
 
-  33% {
-    transform: translate(30px, -50px) scale(1.1);
+  .eco-shadow {
+    box-shadow: 0 4px 20px rgba(82, 107, 83, 0.08);
+    /* sharper, subtle shadow */
   }
-
-  66% {
-    transform: translate(-20px, 20px) scale(0.9);
-  }
-
-  100% {
-    transform: translate(0px, 0px) scale(1);
-  }
-}
-
-.animate-blob {
-  animation: blob 7s infinite;
-}
-
-.animation-delay-2000 {
-  animation-delay: 2s;
-}
-
-.animation-delay-4000 {
-  animation-delay: 4s;
-}
-
-/* Gradients */
-.gradient-text {
-  @apply bg-clip-text text-transparent bg-gradient-to-r from-eco-dark to-eco-green;
 }
