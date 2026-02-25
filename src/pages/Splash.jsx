@@ -1,16 +1,26 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useAuth } from '../lib/AuthContext';
 
 export default function Splash() {
     const navigate = useNavigate();
+    const { user, loading } = useAuth();
 
     useEffect(() => {
+        if (loading) return; // Wait for session check
+
         const timer = setTimeout(() => {
-            navigate('/auth');
-        }, 2500);
+            // If already signed in, skip auth and go home
+            if (user) {
+                navigate('/home', { replace: true });
+            } else {
+                navigate('/auth', { replace: true });
+            }
+        }, 2000);
+
         return () => clearTimeout(timer);
-    }, [navigate]);
+    }, [user, loading, navigate]);
 
     return (
         <div className="flex flex-col items-center justify-center min-h-[100dvh] bg-background">
