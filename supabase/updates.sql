@@ -37,3 +37,13 @@ CREATE POLICY "Allow public update on offers" ON public.offers FOR UPDATE USING 
 CREATE POLICY "Allow public read access on notifications" ON public.notifications FOR SELECT USING (true);
 CREATE POLICY "Allow public insert on notifications" ON public.notifications FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow public update on notifications" ON public.notifications FOR UPDATE USING (true);
+
+-- 5. Allow deletes on items (needed for "Remove Listing" on Profile)
+CREATE POLICY "Allow public delete on items" ON public.items FOR DELETE USING (true);
+
+-- 6. Allow updates on items
+CREATE POLICY "Allow public update on items" ON public.items FOR UPDATE USING (true);
+
+-- 7. Allow deletes on users (for account deletion)
+CREATE POLICY "Allow public delete on users" ON public.users FOR DELETE USING (true);
+

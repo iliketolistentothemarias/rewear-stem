@@ -8,11 +8,36 @@ export function AuthProvider({ children }) {
     const [session, setSession] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    // Ensure auth user has a matching row in public.users
+    const ensurePublicUser = async (authUser) => {
+        if (!authUser) return;
+        try {
+            const { data } = await supabase
+                .from('users')
+                .select('id')
+                .eq('id', authUser.id)
+                .single();
+
+            if (!data) {
+                // Insert a new public user row with the same ID as auth.users
+                await supabase.from('users').insert([{
+                    id: authUser.id,
+                    username: authUser.email?.split('@')[0] || `user_${authUser.id.slice(0, 6)}`,
+                    points: 0,
+                }]);
+            }
+        } catch (err) {
+            // Row might already exist or insert might fail — that's OK
+            console.log('ensurePublicUser:', err.message);
+        }
+    };
+
     useEffect(() => {
         // Get initial session
         supabase.auth.getSession().then(({ data: { session } }) => {
             setSession(session);
             setUser(session?.user ?? null);
+            if (session?.user) ensurePublicUser(session.user);
             setLoading(false);
         });
 
@@ -20,6 +45,7 @@ export function AuthProvider({ children }) {
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             setSession(session);
             setUser(session?.user ?? null);
+            if (session?.user) ensurePublicUser(session.user);
             setLoading(false);
         });
 

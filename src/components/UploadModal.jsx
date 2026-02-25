@@ -64,7 +64,7 @@ export default function UploadModal({ isOpen, onClose }) {
                 imageUrl = await uploadMedia();
             }
 
-            const { error } = await supabase.from('items').insert([{
+            const insertData = {
                 title,
                 description: description || `A new ${category} listing from a ReWear user.`,
                 type: category,
@@ -72,11 +72,28 @@ export default function UploadModal({ isOpen, onClose }) {
                 store_name: user?.email?.split('@')[0] || 'ReWear User',
                 is_verified: true,
                 condition: 'Like New',
-                seller_id: user?.id || null,
                 image_url: imageUrl,
-            }]);
+            };
 
-            if (error) throw error;
+            // Only set seller_id if user exists (avoids FK errors if public.users row isn't synced yet)
+            if (user?.id) {
+                insertData.seller_id = user.id;
+            }
+
+            const { error } = await supabase.from('items').insert([insertData]);
+
+            if (error) {
+                console.error('Insert error:', error);
+                // If it's a FK error, retry without seller_id
+                if (error.code === '23503') {
+                    delete insertData.seller_id;
+                    const { error: retryError } = await supabase.from('items').insert([insertData]);
+                    if (retryError) throw retryError;
+                } else {
+                    throw error;
+                }
+            }
+
             setStep('success');
             setTimeout(() => {
                 handleClose();
@@ -86,6 +103,7 @@ export default function UploadModal({ isOpen, onClose }) {
             }, 2500);
         } catch (err) {
             console.error('Failed to publish:', err);
+            alert(`Failed to publish: ${err.message || 'Unknown error'}`);
         } finally {
             setUploading(false);
         }
